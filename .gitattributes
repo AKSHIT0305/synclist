@@ -1,0 +1,5 @@
+# Keep LF everywhere (matches .editorconfig / Prettier; gradlew and shell scripts need LF).
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jks binary
