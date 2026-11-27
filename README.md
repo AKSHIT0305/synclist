@@ -139,9 +139,12 @@ The Supabase CLI is a dev dependency, so `npx supabase` works without a global i
 ```sh
 npx supabase login                                  # opens a browser, one time
 npx supabase link --project-ref <project-ref>       # the ref is the subdomain of the project URL
-npx supabase db push --dry-run                      # review what would be applied
-npm run db:push                                     # apply new migrations
+npx supabase migration list --remote               # what's applied on the hosted project
+npx supabase db push --remote --dry-run             # review what would be applied
+npm run db:push                                     # apply new migrations (= supabase db push --remote)
 ```
+
+> Supabase CLI v3 targets a **local** Docker database by default. Every command aimed at the hosted project needs `--remote`. Without it you get `ECONNREFUSED 127.0.0.1:54322`.
 
 ### Run the RLS tests
 
@@ -162,7 +165,7 @@ npm run db:seed -- --member you@gmail.com        # also add your account to the 
 ### Regenerate DB types after a schema change
 
 ```sh
-npx supabase gen types typescript --linked > src/lib/database.types.ts
+npx supabase gen types typescript --remote > src/lib/database.types.ts
 ```
 
 ---
@@ -385,7 +388,7 @@ npm run test:rls       # required if you touched supabase/
 | `npm run lint`                    | ESLint (Expo config + Prettier)                        |
 | `npm test` / `npm run test:watch` | Jest unit and component tests                          |
 | `npm run test:rls`                | pgTAP RLS tests against `SUPABASE_DB_URL`, rolled back |
-| `npm run db:push`                 | Apply new migrations to the linked Supabase project    |
+| `npm run db:push`                 | Apply new migrations to the linked (remote) project    |
 | `npm run db:seed`                 | Seed demo users, lists and tasks (dev only)            |
 | `npm run format` / `format:check` | Prettier write / check                                 |
 

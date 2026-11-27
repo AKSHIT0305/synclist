@@ -13,7 +13,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:rls": "tsx scripts/run-sql-tests.ts",
-    "db:push": "supabase db push",
+    "db:push": "supabase db push --remote",
     "db:seed": "tsx scripts/seed.ts",
     "check": "npm run typecheck && npm run lint && npm test"
   },
