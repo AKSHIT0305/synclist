@@ -5,3 +5,5 @@ android
 ios
 package-lock.json
 supabase/.temp
+
+supabase/config.jsonc
