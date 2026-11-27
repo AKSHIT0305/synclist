@@ -50,7 +50,7 @@ Still to do before Phase 1 counts as done. Each item has a section below.
 
 - [x] Migrations `0001`–`0007` applied to the hosted Supabase project
 - [x] `npm run test:rls` passes against the hosted database (4/4 files, 85 assertions)
-- [ ] Regenerate `src/lib/database.types.ts` from the live schema (it's hand-written for now)
+- [x] DB types generated from the hosted schema (`npm run db:types`), narrowed to client column grants
 - [ ] Create the Google OAuth clients and enable the Google provider in Supabase
 - [x] EAS project created: `@synclist/synclist`, wired into `app.config.ts`
 - [ ] Build and install the development APK
@@ -165,8 +165,18 @@ npm run db:seed -- --member you@gmail.com        # also add your account to the 
 ### Regenerate DB types after a schema change
 
 ```sh
-npx supabase gen types typescript --remote > src/lib/database.types.ts
+npm run db:types        # writes src/lib/database.generated.ts from the hosted schema
+npm run typecheck
 ```
+
+The DB types live in two files:
+
+- `src/lib/database.generated.ts` is the raw `supabase gen types` output. Never edit it by hand. Regenerate it after every migration and commit it with the migration.
+- `src/lib/database.types.ts` is what the app imports. It builds on the generated file but keeps only the columns that clients are granted in `0006_rls.sql`. For example, `profiles.push_tokens` is hidden and `tasks.version` can't be written. **If a migration changes a `GRANT`, update the matching column list there in the same PR.**
+
+If a migration renames or drops a column the app uses, `npm run typecheck` fails after `db:types` until `database.types.ts` is updated. `__tests__/lib/database-types-test.ts` checks that the grant narrowing stays in place.
+
+Run it through npm rather than redirecting `supabase gen types` yourself: in Windows PowerShell, `>` can write UTF-16 or add a BOM, depending on version and settings.
 
 ---
 
@@ -390,6 +400,7 @@ npm run test:rls       # required if you touched supabase/
 | `npm run test:rls`                | pgTAP RLS tests against `SUPABASE_DB_URL`, rolled back |
 | `npm run db:push`                 | Apply new migrations to the linked (remote) project    |
 | `npm run db:seed`                 | Seed demo users, lists and tasks (dev only)            |
+| `npm run db:types`                | Regenerate `src/lib/database.generated.ts`             |
 | `npm run format` / `format:check` | Prettier write / check                                 |
 
 ### Testing notes
@@ -428,6 +439,7 @@ npm run test:rls       # required if you touched supabase/
 | Problem                                                    | Fix                                                                                                                                                                                            |
 | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `password authentication failed` (28P01) from `test:rls`   | The password in `SUPABASE_DB_URL` is wrong, or the reset wasn't saved. Reset it in Supabase → Project Settings → Database, **confirm** the reset, and paste the new password with no brackets. |
+| `getaddrinfo ENOTFOUND db.<ref>.supabase.co`               | You used the **Direct** connection string, which is IPv6-only on the Free plan. Use the **Session pooler** URI: user `postgres.<ref>`, host `aws-1-<region>.pooler.supabase.com`, port 5432.   |
 | `Invalid URL` or connection errors with a correct password | Special characters (`% @ : / # ?`) in the password must be URL-encoded. It's easier to reset to an alphanumeric password.                                                                      |
 | App shows **"Setup needed"**                               | A required `EXPO_PUBLIC_*` value is missing from `.env`. Fill it in and restart `npm start` with `--clear`.                                                                                    |
 | Google sign-in fails with `DEVELOPER_ERROR`                | The SHA-1 of the keystore that signed your APK isn't registered on an Android OAuth client, or the package name doesn't match `com.akshit.synclist`.                                           |
