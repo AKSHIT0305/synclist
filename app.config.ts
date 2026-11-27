@@ -2,6 +2,9 @@ import type { ConfigContext, ExpoConfig } from 'expo/config';
 
 const PACKAGE_ID = 'com.akshit.synclist';
 
+/** EAS project @synclist/synclist (owned by the "synclist" Expo organization). Not a secret. */
+const EAS_PROJECT_ID = process.env.EAS_PROJECT_ID || '6342594a-42f4-43a7-968a-8556dfaf3cda';
+
 /**
  * Google Sign-In's config plugin needs an iOS URL scheme even for Android-only builds.
  * iOS ships after the Android launch, so a placeholder is fine until then.
@@ -13,6 +16,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'SyncList',
   slug: 'synclist',
+  owner: 'synclist',
   version: '0.1.0',
   orientation: 'portrait',
   icon: './assets/images/icon.png',
@@ -58,6 +62,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     reactCompiler: true,
   },
   extra: {
-    eas: process.env.EAS_PROJECT_ID ? { projectId: process.env.EAS_PROJECT_ID } : undefined,
+    eas: { projectId: EAS_PROJECT_ID },
   },
 });
