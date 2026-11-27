@@ -48,9 +48,8 @@ Done and passing locally:
 
 Still to do before Phase 1 counts as done. Each item has a section below.
 
-- [ ] Get `SUPABASE_DB_URL` connecting (the last try failed with a wrong-password error; see [Troubleshooting](#troubleshooting))
-- [ ] Apply the migrations to the hosted Supabase project: `npm run db:push`
-- [ ] Run `npm run test:rls` against the hosted database and fix any failures
+- [x] Migrations `0001`–`0007` applied to the hosted Supabase project
+- [x] `npm run test:rls` passes against the hosted database (4/4 files, 85 assertions)
 - [ ] Regenerate `src/lib/database.types.ts` from the live schema (it's hand-written for now)
 - [ ] Create the Google OAuth clients and enable the Google provider in Supabase
 - [x] EAS project created: `@synclist/synclist`, wired into `app.config.ts`
