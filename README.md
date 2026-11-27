@@ -53,7 +53,8 @@ Still to do before Phase 1 counts as done. Each item has a section below.
 - [ ] Run `npm run test:rls` against the hosted database and fix any failures
 - [ ] Regenerate `src/lib/database.types.ts` from the live schema (it's hand-written for now)
 - [ ] Create the Google OAuth clients and enable the Google provider in Supabase
-- [ ] `eas init`, then build and install the development APK
+- [x] EAS project created: `@synclist/synclist`, wired into `app.config.ts`
+- [ ] Build and install the development APK
 - [ ] **Phase 1 check:** on an Android phone, sign in with Google → profile setup → widget intro → empty Lists home. Kill and reopen the app: you should still be signed in.
 
 Phase 2 starts only after the Phase 1 check passes.
@@ -75,12 +76,12 @@ Phase 2 starts only after the Phase 1 check passes.
 
 The project uses a few shared hosted services. Ask the project owner for access to each:
 
-| Service          | What you need                                                            | Why                                               |
-| ---------------- | ------------------------------------------------------------------------ | ------------------------------------------------- |
-| **GitHub**       | Collaborator access to `AKSHIT0305/synclist`                             | To push branches and open PRs                     |
-| **Supabase**     | An invite to the SyncList project (or the values for your `.env`)        | Database, auth and storage                        |
-| **Expo / EAS**   | Membership of the Expo account or organization that owns the project     | To build the APK with the shared `EAS_PROJECT_ID` |
-| **Google Cloud** | Access to the OAuth clients, or have the owner add your keystore's SHA-1 | Google sign-in on your build                      |
+| Service          | What you need                                                            | Why                                              |
+| ---------------- | ------------------------------------------------------------------------ | ------------------------------------------------ |
+| **GitHub**       | Collaborator access to `AKSHIT0305/synclist`                             | To push branches and open PRs                    |
+| **Supabase**     | An invite to the SyncList project (or the values for your `.env`)        | Database, auth and storage                       |
+| **Expo / EAS**   | Membership of the `synclist` Expo organization                           | To build the shared `@synclist/synclist` project |
+| **Google Cloud** | Access to the OAuth clients, or have the owner add your keystore's SHA-1 | Google sign-in on your build                     |
 
 > 🔒 Secrets (the Supabase secret / service-role key and the database password) must be shared through a private channel, **never** in the repo, an issue, a PR or a public chat.
 
@@ -113,7 +114,7 @@ If `.env` values are missing, the app doesn't crash. It opens a **"Setup needed"
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY`    | no      | Supabase → API keys → **publishable** key (`sb_publishable_…`)                  | app                        |
 | `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` | no      | Google Cloud → Credentials → the **Web application** client ID                  | app                        |
 | `EXPO_PUBLIC_ENABLE_PHONE_OTP`     | no      | Keep `false` until an SMS provider is set up                                    | app                        |
-| `EAS_PROJECT_ID`                   | no      | Printed by `npx eas-cli@latest init`                                            | `app.config.ts`            |
+| `EAS_PROJECT_ID`                   | no      | Optional override. Leave empty: `app.config.ts` already sets the shared project | `app.config.ts`            |
 | `GOOGLE_IOS_URL_SCHEME`            | no      | Reversed iOS client ID. Only needed once iOS work starts.                       | `app.config.ts`            |
 | `SUPABASE_SERVICE_ROLE_KEY`        | **yes** | Supabase → API keys → **secret** key (`sb_secret_…`)                            | `scripts/seed.ts`          |
 | `SUPABASE_DB_URL`                  | **yes** | Supabase → **Connect** → **Session pooler** URI, with the DB password filled in | `scripts/run-sql-tests.ts` |
@@ -177,7 +178,7 @@ The app uses native Google Sign-In (`@react-native-google-signin/google-signin`)
 2. **Android client.** Create an OAuth client of type **Android**:
    - Package name: `com.akshit.synclist`
    - SHA-1: the fingerprint of the keystore that signs your build. Get it with `npx eas-cli@latest credentials -p android` → _development_ → _Keystore_. The keystore is created on the first EAS build.
-3. Each signing keystore needs its own Android client (or SHA-1 entry). That includes a second developer's build and the production build. Supabase doesn't need to change, because the Web client ID is the token audience.
+3. EAS stores the keystore on the shared `@synclist/synclist` project, so every developer's EAS build is signed with the same key and one Android client covers everyone. Add another Android client (SHA-1) only for a different keystore, such as the production one or a local `expo run:android` debug build. Supabase doesn't need to change, because the Web client ID is the token audience.
 
 > **Phone OTP** is fully built but hidden with `EXPO_PUBLIC_ENABLE_PHONE_OTP=false`. To turn it on, configure an SMS provider (Twilio or MSG91) in Supabase → Authentication → Phone, then set the flag to `true`.
 
@@ -189,7 +190,6 @@ The app uses native modules (Google Sign-In, SecureStore, SQLite), so it **does 
 
 ```sh
 npx eas-cli@latest login
-npx eas-cli@latest init          # first time only; put the printed id into EAS_PROJECT_ID
 npx eas-cli@latest build --profile development --platform android
 ```
 
@@ -332,6 +332,18 @@ Every change must follow these rules. They're also in `CLAUDE.md` and `AGENTS.md
 8. **Work phase by phase.** Write a short plan for the phase, agree on it, then build it with tests. Update this README (status table and "what was built") at the end of each phase.
 
 ### Git workflow
+
+> ⚠️ **Always pull before you push.** Two developers push to this repo, so every push (by a person or an AI assistant) must be preceded by:
+>
+> ```sh
+> git fetch origin
+> git status -sb                     # "behind N" means there are commits to pull
+> git pull --rebase                  # bring them in; resolve conflicts, never drop the other person's work
+> npm run check                      # re-run if anything was pulled
+> git push
+> ```
+>
+> **Never force-push** to `main` or to someone else's branch. This rule is also in `CLAUDE.md`, so Claude Code follows it automatically.
 
 - `main` should always build and pass `npm run check`.
 - Do work on a branch and open a pull request into `main`:
